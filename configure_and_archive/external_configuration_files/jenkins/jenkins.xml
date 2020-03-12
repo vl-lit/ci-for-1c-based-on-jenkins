@@ -1,0 +1,69 @@
+<!--
+The MIT License
+
+Copyright (c) 2004-2017, Sun Microsystems, Inc., Kohsuke Kawaguchi, Oleg Nenashev, and other Jenkins contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+-->
+
+<!--
+  Windows service definition for Jenkins.
+
+  To uninstall, run "jenkins.exe stop" to stop the service, then "jenkins.exe uninstall" to uninstall the service.
+  Both commands don't produce any output if the execution is successful. 
+-->
+<service>
+  <id>Jenkins</id>
+  <name>Jenkins</name>
+  <description>This service runs Jenkins automation server.</description>
+  <env name="JENKINS_HOME" value="%BASE%"/>
+  <!--
+    if you'd like to run Jenkins with a specific version of Java, specify a full path to java.exe.
+    The following value assumes that you have java in your PATH.
+  -->
+  <executable>%BASE%\jre\bin\java</executable>
+  <arguments>-Dfile.encoding=UTF-8 -Dpermissive-script-security.enabled=true -Xrs -Xmx256m -Dhudson.lifecycle=hudson.lifecycle.WindowsServiceLifecycle -jar "%BASE%\jenkins.war" --httpPort=8080 --webroot="%BASE%\war"</arguments>
+  <!--
+    interactive flag causes the empty black Java window to be displayed.
+    I'm still debugging this.
+  <interactive />
+  -->
+  <logmode>rotate</logmode>
+
+  <onfailure action="restart" />
+  
+  <!-- 
+    In the case WinSW gets terminated and leaks the process, we want to abort
+    these runaway JAR processes on startup to prevent corruption of JENKINS_HOME.
+    So this extension is enabled by default.
+  -->
+  <extensions>
+    <!-- This is a sample configuration for the RunawayProcessKiller extension. -->
+    <extension enabled="true" 
+               className="winsw.Plugins.RunawayProcessKiller.RunawayProcessKillerExtension"
+               id="killOnStartup">
+      <pidfile>%BASE%\jenkins.pid</pidfile>
+      <stopTimeout>10000</stopTimeout>
+      <stopParentFirst>false</stopParentFirst>
+    </extension>
+  </extensions>
+  
+  <!-- See the referenced examples for more options -->
+  
+</service>
